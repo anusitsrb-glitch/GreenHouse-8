@@ -85,7 +85,7 @@ System architecture documentation with:
 
 #### Interlock Protection
 - Prevents FW and RE pins from being active simultaneously
-- 100ms safety delay between direction changes
+- 10ms safety delay between direction changes
 - Hardware protection against short circuit
 
 #### Safety Lock

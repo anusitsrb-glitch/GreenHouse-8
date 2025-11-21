@@ -25,7 +25,7 @@ This release adds comprehensive motor control features to the GreenHouse8 automa
 ### 4. Safety Features
 - **Interlock Protection**: Prevents simultaneous activation of FW and RE pins (short circuit prevention)
 - **Safety Lock**: Manual control disabled during global auto mode
-- **Delay-based Protection**: 100ms delay between direction changes
+- **Delay-based Protection**: 10ms delay between direction changes
 
 ### 5. ThingsBoard Integration
 - Full RPC method support for remote control
@@ -133,7 +133,7 @@ The default pin configuration (adjust as needed):
 ⚠️ **Important Safety Features:**
 1. **Interlock Protection**: The system automatically prevents FW and RE from being active simultaneously
 2. **Safety Lock**: Global auto mode prevents manual control to avoid conflicts
-3. **100ms Delay**: Built-in delay between direction changes protects hardware
+3. **10ms Delay**: Built-in delay between direction changes protects hardware
 
 ## Testing
 

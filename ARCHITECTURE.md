@@ -102,7 +102,7 @@ Manual Control Attempt → controlMotorStatus() → Check globalMotorAuto
                                                             setMotorPins()
                                                                       │
                                                                       ├─ Turn OFF both pins
-                                                                      ├─ Wait 100ms
+                                                                      ├─ Wait 10ms
                                                                       └─ Activate desired pin
 ```
 
@@ -171,7 +171,7 @@ Global Auto Enabled → checkAutoTimers() → Check lastGlobalMotorState
 
 1. **Interlock Protection**
    - Both FW and RE pins are turned OFF before any change
-   - 100ms delay ensures safe state transition
+   - 10ms delay ensures safe state transition
    - Prevents short circuit damage
 
 2. **Safety Lock**
