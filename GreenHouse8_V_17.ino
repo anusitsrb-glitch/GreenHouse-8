@@ -137,11 +137,10 @@ void setup() {
   pinMode(FAN_1_PIN, OUTPUT);
   pinMode(FAN_2_PIN, OUTPUT);
   
-  // Initialize all motors to OFF state
-  setMotorPins(MOTOR_1_FW_PIN, MOTOR_1_RE_PIN, 0);
-  setMotorPins(MOTOR_2_FW_PIN, MOTOR_2_RE_PIN, 0);
-  setMotorPins(MOTOR_3_FW_PIN, MOTOR_3_RE_PIN, 0);
-  setMotorPins(MOTOR_4_FW_PIN, MOTOR_4_RE_PIN, 0);
+  // Initialize all motors to OFF state using arrays
+  for (int i = 0; i < 4; i++) {
+    setMotorPins(motorFwPins[i], motorRePins[i], 0);
+  }
   
   // Load configurations from NVS
   loadGlobalConfig();
@@ -364,20 +363,26 @@ void processRPCRequest(const char* method, JsonDocument& doc, const char* reques
   }
   // Group control - All motors forward
   else if (strcmp(method, "set_all_motors_fw") == 0) {
-    for (int i = 1; i <= 4; i++) {
-      controlMotorStatus(i, 1);
+    if (!globalMotorAuto) {  // Safety lock check
+      setAllMotorsStatus(1);
+    } else {
+      Serial.println("All motors control blocked - Global auto mode is active");
     }
   }
   // Group control - All motors reverse
   else if (strcmp(method, "set_all_motors_re") == 0) {
-    for (int i = 1; i <= 4; i++) {
-      controlMotorStatus(i, 2);
+    if (!globalMotorAuto) {  // Safety lock check
+      setAllMotorsStatus(2);
+    } else {
+      Serial.println("All motors control blocked - Global auto mode is active");
     }
   }
   // Group control - All motors off
   else if (strcmp(method, "set_all_motors_off") == 0) {
-    for (int i = 1; i <= 4; i++) {
-      controlMotorStatus(i, 0);
+    if (!globalMotorAuto) {  // Safety lock check
+      setAllMotorsStatus(0);
+    } else {
+      Serial.println("All motors control blocked - Global auto mode is active");
     }
   }
   // Group control - Motors 1-2 forward
