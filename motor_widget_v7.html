@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Motor Control Widget</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            border-left: 4px solid #667eea;
+            padding-left: 10px;
+        }
+        
+        .motor-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .motor-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .motor-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .motor-status {
+            text-align: center;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+        
+        .status-off {
+            background: #e0e0e0;
+            color: #666;
+        }
+        
+        .status-forward {
+            background: #4caf50;
+            color: white;
+        }
+        
+        .status-reverse {
+            background: #ff9800;
+            color: white;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: white;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-fw {
+            background: #4caf50;
+        }
+        
+        .btn-fw:hover {
+            background: #45a049;
+        }
+        
+        .btn-re {
+            background: #ff9800;
+        }
+        
+        .btn-re:hover {
+            background: #e68900;
+        }
+        
+        .btn-off {
+            background: #f44336;
+        }
+        
+        .btn-off:hover {
+            background: #da190b;
+        }
+        
+        .group-control {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .auto-control {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        
+        .toggle-label {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 30px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: #667eea;
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        .time-input-group {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .time-input {
+            flex: 1;
+        }
+        
+        .time-input label {
+            display: block;
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .time-input input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        
+        .time-input input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-online {
+            background: #4caf50;
+            box-shadow: 0 0 8px #4caf50;
+        }
+        
+        .status-offline {
+            background: #f44336;
+        }
+        
+        .connection-status {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+        }
+        
+        .lock-icon {
+            display: inline-block;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏭 GreenHouse Motor Control Panel</h1>
+        <p class="subtitle">Version 7.0 - Enhanced Motor Control System</p>
+        
+        <div class="connection-status">
+            <span class="status-indicator status-online" id="statusIndicator"></span>
+            <span id="connectionText">Connected to Device</span>
+        </div>
+        
+        <!-- Global Auto Mode Section -->
+        <div class="section">
+            <div class="section-title">⚙️ Global Auto Mode</div>
+            <div class="auto-control">
+                <div class="toggle-container">
+                    <span class="toggle-label">Enable Global Auto Mode (All Motors)</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="globalAutoToggle" onchange="setGlobalAuto()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="time-input-group">
+                    <div class="time-input">
+                        <label for="globalFwTime">Forward Time (seconds)</label>
+                        <input type="number" id="globalFwTime" value="30" min="1" max="3600" onchange="setGlobalFwTime()">
+                    </div>
+                    <div class="time-input">
+                        <label for="globalReTime">Reverse Time (seconds)</label>
+                        <input type="number" id="globalReTime" value="30" min="1" max="3600" onchange="setGlobalReTime()">
+                    </div>
+                </div>
+                
+                <div class="warning-box" id="autoWarning" style="display: none;">
+                    <span class="lock-icon">🔒</span>
+                    <strong>Safety Lock Active:</strong> Manual motor control is disabled while Global Auto Mode is enabled.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Individual Motor Control Section -->
+        <div class="section">
+            <div class="section-title">🎮 Individual Motor Control</div>
+            <div class="motor-grid">
+                <!-- Motor 1 -->
+                <div class="motor-card">
+                    <div class="motor-title">Motor 1</div>
+                    <div class="motor-status status-off" id="motor1Status">OFF</div>
+                    <div class="button-group">
+                        <button class="btn btn-fw" onclick="setMotorStatus(1, 1)">
+                            ▶️ FW
+                        </button>
+                        <button class="btn btn-off" onclick="setMotorStatus(1, 0)">
+                            ⏹️ OFF
+                        </button>
+                        <button class="btn btn-re" onclick="setMotorStatus(1, 2)">
+                            ◀️ RE
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Motor 2 -->
+                <div class="motor-card">
+                    <div class="motor-title">Motor 2</div>
+                    <div class="motor-status status-off" id="motor2Status">OFF</div>
+                    <div class="button-group">
+                        <button class="btn btn-fw" onclick="setMotorStatus(2, 1)">
+                            ▶️ FW
+                        </button>
+                        <button class="btn btn-off" onclick="setMotorStatus(2, 0)">
+                            ⏹️ OFF
+                        </button>
+                        <button class="btn btn-re" onclick="setMotorStatus(2, 2)">
+                            ◀️ RE
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Motor 3 -->
+                <div class="motor-card">
+                    <div class="motor-title">Motor 3</div>
+                    <div class="motor-status status-off" id="motor3Status">OFF</div>
+                    <div class="button-group">
+                        <button class="btn btn-fw" onclick="setMotorStatus(3, 1)">
+                            ▶️ FW
+                        </button>
+                        <button class="btn btn-off" onclick="setMotorStatus(3, 0)">
+                            ⏹️ OFF
+                        </button>
+                        <button class="btn btn-re" onclick="setMotorStatus(3, 2)">
+                            ◀️ RE
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Motor 4 -->
+                <div class="motor-card">
+                    <div class="motor-title">Motor 4</div>
+                    <div class="motor-status status-off" id="motor4Status">OFF</div>
+                    <div class="button-group">
+                        <button class="btn btn-fw" onclick="setMotorStatus(4, 1)">
+                            ▶️ FW
+                        </button>
+                        <button class="btn btn-off" onclick="setMotorStatus(4, 0)">
+                            ⏹️ OFF
+                        </button>
+                        <button class="btn btn-re" onclick="setMotorStatus(4, 2)">
+                            ◀️ RE
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Group Control Section -->
+        <div class="section">
+            <div class="section-title">👥 Group Control</div>
+            <div class="auto-control">
+                <div style="margin-bottom: 15px;">
+                    <strong>All Motors (1-4)</strong>
+                    <div class="group-control">
+                        <button class="btn btn-fw" onclick="sendRPC('set_all_motors_fw', {})">
+                            ▶️ All Forward
+                        </button>
+                        <button class="btn btn-off" onclick="sendRPC('set_all_motors_off', {})">
+                            ⏹️ All Off
+                        </button>
+                        <button class="btn btn-re" onclick="sendRPC('set_all_motors_re', {})">
+                            ◀️ All Reverse
+                        </button>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <strong>Motors 1-2</strong>
+                    <div class="group-control">
+                        <button class="btn btn-fw" onclick="sendRPC('set_motors_12_fw', {})">
+                            ▶️ 1-2 Forward
+                        </button>
+                        <button class="btn btn-off" onclick="sendRPC('set_motors_12_off', {})">
+                            ⏹️ 1-2 Off
+                        </button>
+                        <button class="btn btn-re" onclick="sendRPC('set_motors_12_re', {})">
+                            ◀️ 1-2 Reverse
+                        </button>
+                    </div>
+                </div>
+                
+                <div>
+                    <strong>Motors 3-4</strong>
+                    <div class="group-control">
+                        <button class="btn btn-fw" onclick="sendRPC('set_motors_34_fw', {})">
+                            ▶️ 3-4 Forward
+                        </button>
+                        <button class="btn btn-off" onclick="sendRPC('set_motors_34_off', {})">
+                            ⏹️ 3-4 Off
+                        </button>
+                        <button class="btn btn-re" onclick="sendRPC('set_motors_34_re', {})">
+                            ◀️ 3-4 Reverse
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ThingsBoard widget context
+        var ctx = self.ctx || {};
+        
+        // Initialize widget
+        self.onInit = function() {
+            console.log('Motor Control Widget v7 initialized');
+            updateStatusFromTelemetry();
+            subscribeToAttributes();
+        }
+        
+        // Update status from telemetry data
+        function updateStatusFromTelemetry() {
+            if (ctx.defaultSubscription && ctx.defaultSubscription.data) {
+                var data = ctx.defaultSubscription.data;
+                
+                // Update motor statuses
+                for (var i = 0; i < data.length; i++) {
+                    var item = data[i];
+                    if (item.dataKey && item.dataKey.name) {
+                        var key = item.dataKey.name;
+                        var value = item.data[0] ? item.data[0][1] : 0;
+                        
+                        if (key === 'motor1_status') updateMotorDisplay(1, value);
+                        else if (key === 'motor2_status') updateMotorDisplay(2, value);
+                        else if (key === 'motor3_status') updateMotorDisplay(3, value);
+                        else if (key === 'motor4_status') updateMotorDisplay(4, value);
+                        else if (key === 'global_motor_auto') {
+                            document.getElementById('globalAutoToggle').checked = value;
+                            toggleAutoWarning(value);
+                        }
+                        else if (key === 'global_fw_time') {
+                            document.getElementById('globalFwTime').value = value;
+                        }
+                        else if (key === 'global_re_time') {
+                            document.getElementById('globalReTime').value = value;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Subscribe to attribute updates
+        function subscribeToAttributes() {
+            if (ctx.defaultSubscription) {
+                ctx.defaultSubscription.callbacks.onDataUpdated = function() {
+                    updateStatusFromTelemetry();
+                }
+            }
+        }
+        
+        // Update motor display
+        function updateMotorDisplay(motorNum, status) {
+            var statusEl = document.getElementById('motor' + motorNum + 'Status');
+            if (statusEl) {
+                statusEl.className = 'motor-status';
+                if (status === 0) {
+                    statusEl.className += ' status-off';
+                    statusEl.textContent = 'OFF';
+                } else if (status === 1) {
+                    statusEl.className += ' status-forward';
+                    statusEl.textContent = 'FORWARD';
+                } else if (status === 2) {
+                    statusEl.className += ' status-reverse';
+                    statusEl.textContent = 'REVERSE';
+                }
+            }
+        }
+        
+        // Toggle auto warning display
+        function toggleAutoWarning(enabled) {
+            var warning = document.getElementById('autoWarning');
+            if (warning) {
+                warning.style.display = enabled ? 'block' : 'none';
+            }
+        }
+        
+        // Send RPC command
+        function sendRPC(method, params) {
+            if (ctx && ctx.controlApi) {
+                ctx.controlApi.sendTwoWayCommand(method, params, 5000).then(
+                    function(response) {
+                        console.log('RPC success:', method, response);
+                    },
+                    function(error) {
+                        console.error('RPC error:', method, error);
+                        alert('Command failed: ' + method);
+                    }
+                );
+            } else {
+                console.error('Control API not available');
+            }
+        }
+        
+        // Set motor status
+        function setMotorStatus(motorNum, status) {
+            var method = 'set_motor_' + motorNum + '_status';
+            var params = { status: status };
+            sendRPC(method, params);
+        }
+        
+        // Set global auto mode
+        function setGlobalAuto() {
+            var enabled = document.getElementById('globalAutoToggle').checked;
+            var params = { enabled: enabled };
+            sendRPC('set_global_motor_auto', params);
+            toggleAutoWarning(enabled);
+        }
+        
+        // Set global forward time
+        function setGlobalFwTime() {
+            var time = parseInt(document.getElementById('globalFwTime').value);
+            var params = { time: time };
+            sendRPC('set_global_fw_time', params);
+        }
+        
+        // Set global reverse time
+        function setGlobalReTime() {
+            var time = parseInt(document.getElementById('globalReTime').value);
+            var params = { time: time };
+            sendRPC('set_global_re_time', params);
+        }
+    </script>
+</body>
+</html>
