@@ -60,11 +60,12 @@ bool motor2Auto = false;
 bool motor3Auto = false;
 bool motor4Auto = false;
 
+// Motor pin arrays for easier iteration
+const int motorFwPins[4] = {MOTOR_1_FW_PIN, MOTOR_2_FW_PIN, MOTOR_3_FW_PIN, MOTOR_4_FW_PIN};
+const int motorRePins[4] = {MOTOR_1_RE_PIN, MOTOR_2_RE_PIN, MOTOR_3_RE_PIN, MOTOR_4_RE_PIN};
+
 // Motor states (0 = off, 1 = forward, 2 = reverse)
-int motor1Status = 0;
-int motor2Status = 0;
-int motor3Status = 0;
-int motor4Status = 0;
+int motorStatus[4] = {0, 0, 0, 0};  // Array for motors 1-4 (index 0-3)
 
 // Global motor auto control variables (NEW)
 bool globalMotorAuto = false;
@@ -101,7 +102,11 @@ void setMotorPins(int fwPin, int rePin, int status) {
   // First turn off both pins, then activate the desired one
   digitalWrite(fwPin, LOW);
   digitalWrite(rePin, LOW);
-  delay(100);  // Small delay to ensure both are off before activating one
+  
+  // Brief delay for relay settling (10ms is usually sufficient for most relays)
+  // This is a blocking delay but necessary for hardware safety
+  // Trade-off: 10ms blocking vs potential short circuit damage
+  delay(10);
   
   if (status == 1) {
     // Forward
@@ -293,7 +298,7 @@ void processRPCRequest(const char* method, JsonDocument& doc, const char* reques
     controlMotorStatus(1, status);
     
     JsonDocument responseDoc;
-    responseDoc["status"] = motor1Status;
+    responseDoc["status"] = motorStatus[0];
     char response[128];
     serializeJson(responseDoc, response);
     String responseTopic = String(RPC_RESPONSE_TOPIC) + requestId;
@@ -304,7 +309,7 @@ void processRPCRequest(const char* method, JsonDocument& doc, const char* reques
     controlMotorStatus(2, status);
     
     JsonDocument responseDoc;
-    responseDoc["status"] = motor2Status;
+    responseDoc["status"] = motorStatus[1];
     char response[128];
     serializeJson(responseDoc, response);
     String responseTopic = String(RPC_RESPONSE_TOPIC) + requestId;
@@ -315,7 +320,7 @@ void processRPCRequest(const char* method, JsonDocument& doc, const char* reques
     controlMotorStatus(3, status);
     
     JsonDocument responseDoc;
-    responseDoc["status"] = motor3Status;
+    responseDoc["status"] = motorStatus[2];
     char response[128];
     serializeJson(responseDoc, response);
     String responseTopic = String(RPC_RESPONSE_TOPIC) + requestId;
@@ -326,7 +331,7 @@ void processRPCRequest(const char* method, JsonDocument& doc, const char* reques
     controlMotorStatus(4, status);
     
     JsonDocument responseDoc;
-    responseDoc["status"] = motor4Status;
+    responseDoc["status"] = motorStatus[3];
     char response[128];
     serializeJson(responseDoc, response);
     String responseTopic = String(RPC_RESPONSE_TOPIC) + requestId;
@@ -456,25 +461,17 @@ void controlMotorStatus(int motorNum, int status) {
     return;
   }
   
-  // Update status and control motor
-  switch (motorNum) {
-    case 1:
-      motor1Status = status;
-      setMotorPins(MOTOR_1_FW_PIN, MOTOR_1_RE_PIN, status);
-      break;
-    case 2:
-      motor2Status = status;
-      setMotorPins(MOTOR_2_FW_PIN, MOTOR_2_RE_PIN, status);
-      break;
-    case 3:
-      motor3Status = status;
-      setMotorPins(MOTOR_3_FW_PIN, MOTOR_3_RE_PIN, status);
-      break;
-    case 4:
-      motor4Status = status;
-      setMotorPins(MOTOR_4_FW_PIN, MOTOR_4_RE_PIN, status);
-      break;
+  // Validate motor number (1-4)
+  if (motorNum < 1 || motorNum > 4) {
+    Serial.print("Invalid motor number: ");
+    Serial.println(motorNum);
+    return;
   }
+  
+  // Update status and control motor (motorNum is 1-based, array is 0-based)
+  int index = motorNum - 1;
+  motorStatus[index] = status;
+  setMotorPins(motorFwPins[index], motorRePins[index], status);
   
   Serial.print("Motor ");
   Serial.print(motorNum);
@@ -485,6 +482,14 @@ void controlMotorStatus(int motorNum, int status) {
 void controlMotor(int motorNum, int status) {
   // Legacy function - now calls controlMotorStatus
   controlMotorStatus(motorNum, status);
+}
+
+// Helper function to set all motors to a specific status
+void setAllMotorsStatus(int status) {
+  for (int i = 0; i < 4; i++) {
+    motorStatus[i] = status;
+    setMotorPins(motorFwPins[i], motorRePins[i], status);
+  }
 }
 
 void checkAutoTimers() {
@@ -535,27 +540,7 @@ void checkAutoTimers() {
     if (lastGlobalMotorState == 1) {
       // Motors are in forward, check if it's time to switch to reverse
       if (currentTime - lastGlobalAction >= globalFwTime) {
-        // Set all motors to reverse
-        for (int i = 1; i <= 4; i++) {
-          switch (i) {
-            case 1:
-              motor1Status = 2;
-              setMotorPins(MOTOR_1_FW_PIN, MOTOR_1_RE_PIN, 2);
-              break;
-            case 2:
-              motor2Status = 2;
-              setMotorPins(MOTOR_2_FW_PIN, MOTOR_2_RE_PIN, 2);
-              break;
-            case 3:
-              motor3Status = 2;
-              setMotorPins(MOTOR_3_FW_PIN, MOTOR_3_RE_PIN, 2);
-              break;
-            case 4:
-              motor4Status = 2;
-              setMotorPins(MOTOR_4_FW_PIN, MOTOR_4_RE_PIN, 2);
-              break;
-          }
-        }
+        setAllMotorsStatus(2);  // Set all motors to reverse
         lastGlobalMotorState = 2;
         lastGlobalAction = currentTime;
         Serial.println("Global motor auto: All motors REVERSE");
@@ -563,53 +548,14 @@ void checkAutoTimers() {
     } else if (lastGlobalMotorState == 2) {
       // Motors are in reverse, check if it's time to switch to forward
       if (currentTime - lastGlobalAction >= globalReTime) {
-        // Set all motors to forward
-        for (int i = 1; i <= 4; i++) {
-          switch (i) {
-            case 1:
-              motor1Status = 1;
-              setMotorPins(MOTOR_1_FW_PIN, MOTOR_1_RE_PIN, 1);
-              break;
-            case 2:
-              motor2Status = 1;
-              setMotorPins(MOTOR_2_FW_PIN, MOTOR_2_RE_PIN, 1);
-              break;
-            case 3:
-              motor3Status = 1;
-              setMotorPins(MOTOR_3_FW_PIN, MOTOR_3_RE_PIN, 1);
-              break;
-            case 4:
-              motor4Status = 1;
-              setMotorPins(MOTOR_4_FW_PIN, MOTOR_4_RE_PIN, 1);
-              break;
-          }
-        }
+        setAllMotorsStatus(1);  // Set all motors to forward
         lastGlobalMotorState = 1;
         lastGlobalAction = currentTime;
         Serial.println("Global motor auto: All motors FORWARD");
       }
     } else {
       // Initial state - start with forward
-      for (int i = 1; i <= 4; i++) {
-        switch (i) {
-          case 1:
-            motor1Status = 1;
-            setMotorPins(MOTOR_1_FW_PIN, MOTOR_1_RE_PIN, 1);
-            break;
-          case 2:
-            motor2Status = 1;
-            setMotorPins(MOTOR_2_FW_PIN, MOTOR_2_RE_PIN, 1);
-            break;
-          case 3:
-            motor3Status = 1;
-            setMotorPins(MOTOR_3_FW_PIN, MOTOR_3_RE_PIN, 1);
-            break;
-          case 4:
-            motor4Status = 1;
-            setMotorPins(MOTOR_4_FW_PIN, MOTOR_4_RE_PIN, 1);
-            break;
-        }
-      }
+      setAllMotorsStatus(1);
       lastGlobalMotorState = 1;
       lastGlobalAction = currentTime;
       Serial.println("Global motor auto: Initial state - All motors FORWARD");
@@ -677,10 +623,10 @@ void sendTelemetry() {
   doc["fan2_auto"] = fan2Auto;
   
   // Motor telemetry
-  doc["motor1_status"] = motor1Status;
-  doc["motor2_status"] = motor2Status;
-  doc["motor3_status"] = motor3Status;
-  doc["motor4_status"] = motor4Status;
+  doc["motor1_status"] = motorStatus[0];
+  doc["motor2_status"] = motorStatus[1];
+  doc["motor3_status"] = motorStatus[2];
+  doc["motor4_status"] = motorStatus[3];
   
   // Global motor auto telemetry
   doc["global_motor_auto"] = globalMotorAuto;

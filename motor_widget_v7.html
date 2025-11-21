@@ -579,11 +579,6 @@
             var params = { time: time };
             sendRPC('set_global_re_time', params);
         }
-        
-        // Initialize on load
-        if (typeof self.onInit === 'function') {
-            self.onInit();
-        }
     </script>
 </body>
 </html>
